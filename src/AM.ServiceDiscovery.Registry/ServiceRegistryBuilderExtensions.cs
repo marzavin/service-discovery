@@ -1,28 +1,21 @@
 ﻿using Microsoft.AspNetCore.Builder;
+using System;
 
 namespace AM.ServiceDiscovery.Registry
 {
     public static class RegistryBuilderExtensions
     {
-        public static IApplicationBuilder UseServiceDiscoveryRegistry(this IApplicationBuilder builder, ServiceRegistryOptions options = null)
+        public static IApplicationBuilder UseServiceDiscoveryRegistry(this IApplicationBuilder builder, Action<ServiceRegistryOptions> configureOptions = null)
         {
-            if (options == null)
+            var options = ServiceRegistryOptions.Default;
+            if (configureOptions != null)
             {
-                options = GetDefaultRegistryOptions();
+                configureOptions.Invoke(options);
             }
 
-            builder.UseMiddleware<ServiceRegistryMiddleware>();
+            builder.UseMiddleware<ServiceRegistryMiddleware>(options);
 
             return builder;
-        }
-
-        private static ServiceRegistryOptions GetDefaultRegistryOptions()
-        {
-            return new ServiceRegistryOptions
-            {
-                RegisterUrl = "servicediscovery/register",
-                UnregisterUrl = "servicediscovery/unregister"
-            };
         }
     }
 }
