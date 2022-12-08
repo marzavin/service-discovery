@@ -108,7 +108,13 @@ namespace AM.ServiceDiscovery.Registry
 
         private ServiceRegistrationInfo GetServiceRegistration(HttpRequest request)
         {
-            return new ServiceRegistrationInfo { TimeStamp = DateTime.UtcNow };
+            return new ServiceRegistrationInfo
+            { 
+                Id = Guid.NewGuid().ToString(),
+                Name = Guid.NewGuid().ToString(),
+                BaseUrl = Guid.NewGuid().ToString(),
+                TimeStamp = DateTime.UtcNow
+            };
         }
     }
 }
