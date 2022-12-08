@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace AM.ServiceDiscovery.Registry
 {
-    public class ServiceRegistryMiddleware
+    internal class ServiceRegistryMiddleware
     {
         private readonly RequestDelegate _next;
 
@@ -28,9 +28,13 @@ namespace AM.ServiceDiscovery.Registry
 
         public Task Invoke(HttpContext context)
         {
-            return ValidateRequest(context)
-                ? ProcessRequestAsync(context)
-                : _next.Invoke(context);
+            var isUrlSupported = ValidateRequest(context);
+            if (isUrlSupported)
+            {
+                return ProcessRequestAsync(context);
+            }
+                 
+            return _next.Invoke(context);
         }
 
         private bool ValidateRequest(HttpContext context)

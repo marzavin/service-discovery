@@ -1,4 +1,4 @@
-namespace AM.ServiceDiscovery.Registry.Web
+namespace AM.ServiceDiscovery.Service.Web
 {
     public class Program
     {
@@ -8,16 +8,16 @@ namespace AM.ServiceDiscovery.Registry.Web
 
             // Add services to the container.
 
-            var services = builder.Services;
-            
-            services.AddControllers();
-            services.AddServiceRegistry();
+            builder.Services.AddControllers();
 
             var app = builder.Build();
 
+            app.Lifetime.ApplicationStarted.Register(OnStart);
+            app.Lifetime.ApplicationStopped.Register(OnStop);
+
             // Configure the HTTP request pipeline.
 
-            app.UseServiceDiscoveryRegistry();
+            app.UseServiceDiscoveryHealthCheck();
 
             app.UseAuthorization();
 
@@ -25,5 +25,11 @@ namespace AM.ServiceDiscovery.Registry.Web
 
             app.Run();
         }
+
+        private static void OnStart()
+        { }
+
+        private static void OnStop()
+        { }
     }
 }
