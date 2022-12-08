@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System;
 using System.Threading.Tasks;
 
@@ -14,45 +13,51 @@ namespace AM.ServiceDiscovery.Registry
 
         private readonly ServiceRegistryOptions _options;
 
+        private readonly IServiceRegistryStore _store;
+
         private readonly ILogger _logger;
 
-        public ServiceRegistryMiddleware(RequestDelegate next, IOptions<ServiceRegistryOptions> options, ILogger<ServiceRegistryMiddleware> logger)
+        public ServiceRegistryMiddleware(RequestDelegate next, ServiceRegistryOptions options,
+            IServiceRegistryStore store, ILogger<ServiceRegistryMiddleware> logger)
         {
             _next = next ?? throw new ArgumentNullException(nameof(next));
-            _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _store = store ?? throw new ArgumentNullException(nameof(store));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public Task Invoke(HttpContext context, ServiceRegistryOptions options, IServiceRegistryStore store)
+        public Task Invoke(HttpContext context)
         {
-            return ValidateRequest(context, options) ? ProcessRequestAsync(context, options, store) : _next.Invoke(context);
+            return ValidateRequest(context)
+                ? ProcessRequestAsync(context)
+                : _next.Invoke(context);
         }
 
-        private bool ValidateRequest(HttpContext context, ServiceRegistryOptions options)
+        private bool ValidateRequest(HttpContext context)
         {
             var request = context.Request;
-            return CheckSupportedUrl(request.Path, options.RegisterUrl) || CheckSupportedUrl(request.Path, options.UnregisterUrl);
+            return CheckSupportedUrl(request.Path, _options.RegisterUrl) || CheckSupportedUrl(request.Path, _options.UnregisterUrl);
         }
 
-        private async Task ProcessRequestAsync(HttpContext context, ServiceRegistryOptions options, IServiceRegistryStore store)
+        private async Task ProcessRequestAsync(HttpContext context)
         {
             var request = context.Request;
             var status = 200;
             string message;
 
-            var service = GetServiceRegistration(request);            
+            var service = GetServiceRegistration(request);
             if (ValidateServiceRegistration(service))
             {
                 try
                 {
                     if (CheckSupportedUrl(request.Path, _options.RegisterUrl))
                     {
-                        await store.RegisterServiceAsync(service);
+                        await _store.RegisterServiceAsync(service);
                         message = $"Service with Id='{service.Id}' has been successfully registered.";
                     }
                     else
                     {
-                        await store.UnregisterServiceAsync(service);
+                        await _store.UnregisterServiceAsync(service);
                         message = $"Service with Id='{service.Id}' has been successfully unregistered.";
                     }
 
