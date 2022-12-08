@@ -1,7 +1,11 @@
+using AM.ServiceDiscovery.Core;
+
 namespace AM.ServiceDiscovery.Service.Web
 {
     public class Program
     {
+        private static readonly ServiceRegistryClient _serviceRegistry = new();
+
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
@@ -27,9 +31,26 @@ namespace AM.ServiceDiscovery.Service.Web
         }
 
         private static void OnStart()
-        { }
+        {
+            var service = GetServiceRegistrationInfo();
+            _serviceRegistry.RegisterService(service);
+        }
 
         private static void OnStop()
-        { }
+        {
+            var service = GetServiceRegistrationInfo();
+            _serviceRegistry.UnregisterService(service);
+        }
+
+        private static ServiceRegistrationInfo GetServiceRegistrationInfo()
+        {
+            return new ServiceRegistrationInfo
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = Guid.NewGuid().ToString(),
+                BaseUrl = Guid.NewGuid().ToString(),
+                TimeStamp = DateTime.UtcNow
+            };
+        }
     }
 }
